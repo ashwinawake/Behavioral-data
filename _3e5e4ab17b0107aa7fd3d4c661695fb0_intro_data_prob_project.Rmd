@@ -1,0 +1,192 @@
+---
+title: "Exploring the BRFSS data"
+output: 
+  html_document: 
+    fig_height: 4
+    highlight: pygments
+    theme: spacelab
+---
+
+## Setup
+
+### Load packages
+
+```{r load-packages, message = FALSE}
+
+library(dplyr)
+library(statsr)
+library(ggplot2)
+```
+
+### Load data
+
+Make sure your data and R Markdown files are in the same directory. When loaded
+your data file will be called `brfss2013`. Delete this note when before you submit 
+your work. 
+
+```{r load-data}
+load("brfss2013.RData")
+```
+
+
+
+* * *
+
+## Part 1: Data
+
+```
+The data are collected through landline and cellular based surveys.The interviewer collects data from a randomly selected adult in a household. For adults with cellular phones, data is collected from the individual in a private residence or college housing.
+
+The data collected here is not subjected a treatment or control group i.e an experimental study has not been conducted so conclusions derived from this data set cannot be applied to the general population. Also, the sampling method could be biased and may not successfully represent the entire population. Examining this data may show some patterns of correlation but this does not imply causation.
+```
+
+* * *
+
+## Part 2: Research questions
+
+**Research quesion 1:**
+What is the relationship between average dark green vegatable consumption and residing state?
+
+Green Vegetables are essential for good health. I'm interested in knowing how much vegetables are consumed on an average in each state. This information could shows which states are more healthier than others. 
+
+**Research quesion 2:**
+What is the relationship of marital status, emotional support and life satisfaction?
+
+Are married couples who always get emotional suport completely satisfied? How does it look in comparison with Unmarried couples? What about Divorced and separated couples? Who's the happiest amongst them?
+
+**Research quesion 3:**
+What is the relationship of income, medicare and diabetes?
+
+Medicare being a national social insurance program.
+
+Among the population of diabetics , how many want medicare? and how does it vary with differing ranges of income? Does medicare help ll diabetics within all ranges of income?
+
+* * *
+
+## Part 3: Exploratory data analysis
+
+NOTE: Insert code chunks as needed by clicking on the "Insert a new code chunk" 
+button (green button with orange arrow) above. Make sure that your code is visible
+in the project you submit. Delete this note when before you submit your work.
+
+**Research quesion 1:**
+
+```{r}
+avg_veg_con_state <- brfss2013 %>%
+ group_by(X_state) %>%
+ summarise(average_consumption = mean(fvgreen, na.rm=TRUE), n=n())
+
+
+
+summary(avg_veg_con_state)
+
+ggplot(data = avg_veg_con_state, aes(x = X_state, y= average_consumption)) + geom_density() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+
+#The above density plot depicts the average number of times an American would eat dark green vegetables. The averages are sorted by State.
+
+#From looking at the density plot one can say that an American on average consumed dark green vegetables atleast 200 times in each state except for Puerto Rico which shows an average of 150. 
+
+#The state with the highest average of dark green vegetable consumers is South Dakota (221.0)
+```
+
+**Research quesion 2:**
+
+```{r}
+#Reading marital data
+brfss2013 %>%
+ group_by(marital) %>%
+ summarise(count=n())
+
+#Reading emtsuprt data
+brfss2013 %>%
+ group_by(emtsuprt) %>%
+ summarise(count=n())
+
+#Reading lsatisfy data
+brfss2013 %>%
+ group_by(lsatisfy) %>%
+ summarise(count=n())
+
+#Removing NA and mving dta to a new table. 
+marry_happy <- brfss2013 %>%
+ filter(!(is.na(marital)), !(is.na(emtsuprt)), !(is.na(lsatisfy)), emtsuprt != 'Usually', emtsuprt != 'Sometimes', emtsuprt != 'Rarely', emtsuprt != 'Never', marital!='Married', marital!='Widowed', marital!='Never married', marital!='A member of an unmarried couple', lsatisfy!='Satisfied', lsatisfy!='Dissatisfied', lsatisfy!='Very dissatisfied') %>%
+ group_by(marital, emtsuprt,lsatisfy) %>%
+ summarise(count=n())
+
+#Displaying the data
+marry_happy
+
+ggplot(data = marry_happy, aes(x = marital, y= count)) + geom_density() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+#From the above density plot, when we factor in emotional support, divorces couples are more satisfied with their life than Separated couples when there is always emotional support.
+
+
+marry_happy <- brfss2013 %>%
+ filter(!(is.na(marital)), !(is.na(emtsuprt)), !(is.na(lsatisfy)), emtsuprt != 'Usually', emtsuprt != 'Sometimes', emtsuprt != 'Rarely', emtsuprt != 'Never', marital!='Divorced', marital!='Widowed', marital!='Separated', marital!='A member of an unmarried couple', lsatisfy!='Satisfied', lsatisfy!='Dissatisfied', lsatisfy!='Very dissatisfied') %>%
+ group_by(marital, emtsuprt,lsatisfy) %>%
+ summarise(count=n())
+
+#Displaying the data
+marry_happy
+
+ggplot(data = marry_happy, aes(x = marital, y= count)) + geom_density() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+#From the above density plot, when we factor in emotional support, married couples are more satisfied with their life than unmarried couples when there is always emotional support in the relationship.
+
+
+marry_happy <- brfss2013 %>%
+ filter(!(is.na(marital)), !(is.na(emtsuprt)), !(is.na(lsatisfy)), emtsuprt != 'Usually', emtsuprt != 'Sometimes', emtsuprt != 'Rarely', emtsuprt != 'Always', marital!='Married', marital!='Widowed', marital!='Separated', marital!='A member of an unmarried couple', lsatisfy!='Satisfied', lsatisfy!='Dissatisfied', lsatisfy!='Very dissatisfied') %>%
+ group_by(marital, emtsuprt,lsatisfy) %>%
+ summarise(count=n())
+
+#Displaying the data
+marry_happy
+
+ggplot(data = marry_happy, aes(x = marital, y= count)) + geom_density() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+#From the above density plot, when we factor in emotional support, divorced couples are more satisfied with their life than unmarried couples when there is no emotional support in the relationship..
+```
+
+
+
+**Research quesion 3:**
+
+```{r}
+#Reading income data
+brfss2013 %>%
+ group_by(income2) %>%
+ summarise(count=n())
+
+#Reading diabetics data
+brfss2013 %>%
+ group_by(diabete3) %>%
+ summarise(count=n())
+
+#Reading medicare data
+brfss2013 %>%
+ group_by(medicare) %>%
+ summarise(count=n())
+
+#Tabulating the relationship between diabetics and medicare
+ diabet <- brfss2013 %>%
+ filter(!(is.na(diabete3)),!(is.na(medicare)),diabete3!="No",diabete3!="Yes, but female told only during pregnancy",diabete3!="No, pre-diabetes or borderline diabetes") %>%
+ group_by(diabete3, medicare) %>%
+ summarise(count=n())
+ 
+ #Drawing a density plot showing the relationship between diabetics and medicare.
+ #Clearly more number of diabetics are enrolled in medicare and the others are not.
+ ggplot(data = diabet, aes(x = medicare, y= count)) + geom_density() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ 
+#FIltering data
+#Removing NA values and arranging the data to reflect income values of only diabetics.
+medi_data <- brfss2013 %>%
+ filter(!(is.na(income2)),!(is.na(diabete3)),!(is.na(medicare)),diabete3!="No",diabete3!="Yes, but female told only during pregnancy",diabete3!="No, pre-diabetes or borderline diabetes", medicare!="No") %>%
+ group_by(income2,diabete3,medicare) %>%
+ summarise(count=n())
+
+medi_data
+
+#Drawing a density plot of the income range of diabetics and number enrolled.
+ggplot(data = medi_data, aes(x = income2, y= count)) + geom_density() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+#The density chart shows that more number of diabetics earning less than $25,000 are enrolled in medicare than the rest of the income groups. This could be because people that fall in a higher income group can afford better treatment options and rely less on medicare, whereas diabetics in a slightly lower income group prefer medicare due to financial contraints.
+```
+
